@@ -21,22 +21,40 @@ app.use('/test', (req, res, next) => {
 });
 
 app.use('/start',async (req, res, next) => {
-    await Com.init();
-    res.status(200);
-    await res.json({
-        response: 'Port reading'
-    })
+    let isSuccess = await Com.init();
+    if(isSuccess){
+        res.status(200);
+        await res.json({
+            response: 'Port reading'
+        })
+    } else {
+        res.status(500);
+        await res.json({
+            response: 'Port can not open. Another process can use port, please check it.'
+        })
+    }
+
 });
 
 app.use('/stop',async (req, res, next) => {
     try{
-        await Com.close();
-        res.status(200);
-        await res.json({
-            response: 'Port stopped'
-        })
+        let isSuccess = Com.close();
+        if(isSuccess){
+            res.status(200);
+            await res.json({
+                response: 'Port stopped'
+            })
+        } else {
+            res.status(500);
+            await res.json({
+                response: 'Port can not stopped, port can be null or already close.'
+            })
+        }
     }catch (e) {
         res.status(500);
+        await res.json({
+            response: 'Port can not stopped. Error occurred'
+        })
     }
 });
 
@@ -57,7 +75,11 @@ app.use((error, req, res, next) => {
 
 
 app.listen(port, () => {
+    console.log(`--------\t\t Important Informations\t\t --------`);
     console.log(`Server started on ${ip.address().toString()}:${port}`);
+    console.log(`To open serial port communication, please send GET request ${ip.address().toString()}:${port}/start`);
+    console.log(`To close serial port communication, please send GET request ${ip.address().toString()}:${port}/stop`);
+    console.log(`--------\t\t ----------------------\t\t --------`);
 });
 module.exports = app;
 

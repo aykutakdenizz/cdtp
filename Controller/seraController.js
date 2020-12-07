@@ -35,16 +35,7 @@ exports.setTemperature = async (req, res, next) => {
         });
     } else {
         res.status(500).json({
-            message: 'Operation is failed!'
+            message: 'Operation is failed! (Port may be close)'
         });
     }
 };
-
-function str2ab(str) {
-    let buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-    let bufView = new Uint16Array(buf);
-    for (let i = 0, strLen = str.length; i < strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-    }
-    return buf;
-}
