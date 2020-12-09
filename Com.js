@@ -1,56 +1,85 @@
 const SerialPort = require('serialport');
 const Temperature = require('./temperature');
-let portList = [];
-let portPath = '';
 
-exports.list = async () => {
+let portDataList = [];
+let comPorts = [];
+
+exports.scanPorts = async () => {
+    while(portDataList.length > 0) {
+        portDataList.pop();
+    }
+    while(comPorts.length > 0) {
+        comPorts.pop();
+    }
     await SerialPort.list().then(ports => {
         ports.forEach(function (port) {
             console.log({path: port.path});
+            portDataList.push(port);
         });
     });
 };
 
-exports.startReading = async (portId) => {
-    let isSuccess = false;
-    if (portPath.localeCompare(`COM${portId}`)) {
-        port = await new SerialPort(`COM${portId}`, function (err) {
+exports.listenPorts = async () => {
+    await this.scanPorts();
+    let isError = false;
+    for (const comPortData of portDataList) {
+        isError = false;
+        let openedPort = await new SerialPort(comPortData.path, function (err) {
             if (err) {
-                port = null;
+                isError = true;
+                if (openedPort.IsOpen) {
+                    openedPort.close();
+                }
                 return console.log('Error: ', err.message);
             }
         }, false);
+
+        if (!isError) {
+            openedPort.on('data', function (data) {
+                console.log(`Data Arrived ${openedPort.path}=>`, data);
+                Temperature.setTemperature(openedPort.path.substring(3, 4), String.fromCharCode.apply(null, new Uint16Array(data)));
+            });
+            comPorts.push(openedPort);
+            console.log(`Port listening ${openedPort.path}`);
+        }
     }
-    if (port != null) {
-        portPath = `COM${portId}`;
-        console.log('Port open => COM' + portId + '(Listening and saving)');
-        isSuccess = true;
-        port.on('data', function (data) {
-            console.log('Data Arrived =>', data);
-            Temperature.setTemperature(portId, String.fromCharCode.apply(null, new Uint16Array(data)));
-        });
-    }
-    return isSuccess
+    return comPorts;
 };
 
-exports.close = async (port) => {
-    if (port != null) {
-        await port.close();
-        port = null;
-        portPath = null;
-        console.log('Port closed!');
-        return true;
-    } else {
-        console.log('Port could not close!');
+
+exports.close = async (portId) => {
+    let port = await this.getPort(portId);
+    let isSuccess = false;
+    if( port == null){
+        console.log(`Port CAN NOT close (COM${portId}). This port may not be open.`);
         return false;
+    } else {
+        try{
+            if( port.IsOpen)
+                port.close();
+            portDataList = portDataList.filter((portData) => {
+                if (portData.path.localeCompare(`COM${portId}`) !== 0){
+                    return portData;
+                } else {
+                    isSuccess = true;
+                    console.log(`${portData.path} closed.`)
+                }
+            });
+            comPorts = comPorts.filter((port) => {
+                if (port.path.localeCompare(`COM${portId}`) !== 0){
+                    return port;
+                }
+            });
+        } catch (e) {
+            console.log('In close method occurred error:'+ e);
+        }
     }
+    return isSuccess;
 };
 
 exports.sendValueToPort = async (portId, buffer) => {
     let isSuccess = true;
-    if (portPath.localeCompare(`COM${portId}`)) {
-        await this.start(portId);
-    }
+    let port = await this.getPort(portId);
     if (port != null) {
         await port.write(buffer, function (err, result) {
             if (err) {
@@ -59,34 +88,26 @@ exports.sendValueToPort = async (portId, buffer) => {
             }
         });
         if (isSuccess) {
-            console.log(`Message send to ${portPath}`);
+            console.log(`Message send to ${port.path}`);
         }
     } else {
-        console.log(`COM PORT:${portId} is null, can not send value. First close port and reopen your port`);
+        console.log(`COM${portId} is not open, can not send value. This port is not connected, check connection or request listen()`);
         isSuccess = false;
     }
-
     return isSuccess;
 };
 
-exports.start = async (index) => {
-    let isSuccess = true;
-    try {
-        port = await new SerialPort(`COM${index}`, function (err) {
-            if (err) {
-                port = null;
-                isSuccess = false;
-                return console.log('Error: ', err.message);
-            }
-        }, false);
-    } catch (e) {
-        isSuccess = false;
-        console.log(`ERROR in start function: COM${index} error:${e}`);
-    }
 
-    portPath = `COM${index}`;
-    console.log(`Port opened: COM${index}`);
-    return true;
+exports.getPort = async (portId) => {
+    let port = null;
+    for (const comPort of comPorts) {
+        if(comPort.path.localeCompare(`COM${portId}`) === 0){
+            port = comPort;
+        }
+    }
+    return port;
 };
 
-
+exports.checkPortList = () => {
+    return portDataList;
+};
