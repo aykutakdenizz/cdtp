@@ -1,9 +1,10 @@
-let temperature = -12;
+let temperature = new Array(20);
 
-exports.getTemperature = () => {
-    return temperature;
+exports.getTemperature = (index) => {
+    return temperature[index];
 };
 
-exports.setTemperature = (temp) => {
-    temperature = temp;
+exports.setTemperature = (index, temp) => {
+    temperature[index] = temp;
 };
+

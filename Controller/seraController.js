@@ -7,7 +7,7 @@ exports.getTemperature = async (req, res, next) => {
         return res.status(400).json({message:'seraId is missing!'});
     }
 
-    let temperature = Temperature.getTemperature();
+    let temperature = Temperature.getTemperature(seraId);
     res.status(200).json({message: temperature});
 
 };
@@ -27,7 +27,7 @@ exports.setTemperature = async (req, res, next) => {
         });
     }
     buf.writeUInt8(req.body.temperature, 0);
-    isSuccess = await Com.sendValueToPort( buf);
+    isSuccess = await Com.sendValueToPort( req.body.seraId, buf);
 
     if (isSuccess) {
         res.status(200).json({

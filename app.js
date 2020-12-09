@@ -21,7 +21,10 @@ app.use('/test', (req, res, next) => {
 });
 
 app.use('/start',async (req, res, next) => {
-    let isSuccess = await Com.init();
+    if(req.query.seraId == null){
+        return res.status(404).json({response: 'seraId is missing'});
+    }
+    let isSuccess = await Com.startReading(req.query.seraId);
     if(isSuccess){
         res.status(200);
         await res.json({
@@ -30,15 +33,33 @@ app.use('/start',async (req, res, next) => {
     } else {
         res.status(500);
         await res.json({
-            response: 'Port can not open. Another process can use port, please check it.'
+            response: 'Port can not open. Another process may use port or port has already opened, please check it.'
+        })
+    }
+
+});
+app.use('/open',async (req, res, next) => {
+    if(req.query.seraId == null){
+        return res.status(404).json({response: 'seraId is missing'});
+    }
+    let isSuccess = await Com.start(req.query.seraId);
+    if(isSuccess){
+        res.status(200);
+        await res.json({
+            response: 'Port opened'
+        })
+    } else {
+        res.status(500);
+        await res.json({
+            response: 'Port can not open. Another process may use port or port has already opened, please check it.'
         })
     }
 
 });
 
-app.use('/stop',async (req, res, next) => {
+app.use('/close',async (req, res, next) => {
     try{
-        let isSuccess = Com.close();
+        let isSuccess = await Com.close();
         if(isSuccess){
             res.status(200);
             await res.json({
@@ -74,11 +95,15 @@ app.use((error, req, res, next) => {
 });
 
 
-app.listen(port, () => {
+app.listen(port,async () => {
     console.log(`--------\t\t Important Informations\t\t --------`);
     console.log(`Server started on ${ip.address().toString()}:${port}`);
-    console.log(`To open serial port communication, please send GET request ${ip.address().toString()}:${port}/start`);
-    console.log(`To close serial port communication, please send GET request ${ip.address().toString()}:${port}/stop`);
+    console.log(`To open serial port communication, please send GET request ${ip.address().toString()}:${port}/open?index=x`);
+    console.log(`To listen serial port communication, please send GET request ${ip.address().toString()}:${port}/start?index=x`);
+    console.log(`To close serial port communication, please send GET request ${ip.address().toString()}:${port}/close?index=x`);
+    console.log(`--------\t\t ----------------------\t\t --------`);
+    console.log(`--------\t\t --LIST OF COM PORTS---\t\t --------`);
+    await Com.list();
     console.log(`--------\t\t ----------------------\t\t --------`);
 });
 module.exports = app;

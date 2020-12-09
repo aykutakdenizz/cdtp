@@ -1,39 +1,43 @@
 const SerialPort = require('serialport');
 const Temperature = require('./temperature');
-let port;
+let portList = [];
 let portPath = '';
 
-exports.init = async () => {
-    let comList = 0;
+exports.list = async () => {
     await SerialPort.list().then(ports => {
         ports.forEach(function (port) {
-            console.log(port);
-            portPath = port.path;
-            comList ++;
+            console.log({path: port.path});
         });
     });
-    if(comList > 0){
-        port = await new SerialPort(portPath, function (err) {
+};
+
+exports.startReading = async (portId) => {
+    let isSuccess = false;
+    if (portPath.localeCompare(`COM${portId}`)) {
+        port = await new SerialPort(`COM${portId}`, function (err) {
             if (err) {
                 port = null;
                 return console.log('Error: ', err.message);
             }
         }, false);
-
+    }
+    if (port != null) {
+        portPath = `COM${portId}`;
+        console.log('Port open => COM' + portId + '(Listening and saving)');
+        isSuccess = true;
         port.on('data', function (data) {
             console.log('Data Arrived =>', data);
-            Temperature.setTemperature(String.fromCharCode.apply(null, new Uint16Array(data)));
+            Temperature.setTemperature(portId, String.fromCharCode.apply(null, new Uint16Array(data)));
         });
-        return true;
-    } else{
-        return false;
     }
+    return isSuccess
 };
 
-exports.close = () => {
+exports.close = async (port) => {
     if (port != null) {
-        port.close();
+        await port.close();
         port = null;
+        portPath = null;
         console.log('Port closed!');
         return true;
     } else {
@@ -42,24 +46,47 @@ exports.close = () => {
     }
 };
 
-exports.sendValueToPort = async (buffer) => {
+exports.sendValueToPort = async (portId, buffer) => {
     let isSuccess = true;
-    if(port != null){
-        await port.write(buffer,function (err, result) {
+    if (portPath.localeCompare(`COM${portId}`)) {
+        await this.start(portId);
+    }
+    if (port != null) {
+        await port.write(buffer, function (err, result) {
             if (err) {
                 console.log('Error while sending message : ' + err);
-               isSuccess = false;
+                isSuccess = false;
             }
         });
-        if(isSuccess){
+        if (isSuccess) {
             console.log(`Message send to ${portPath}`);
         }
     } else {
-        console.log(`COM PORT:${portPath} is null, can not send value`);
+        console.log(`COM PORT:${portId} is null, can not send value. First close port and reopen your port`);
         isSuccess = false;
     }
+
     return isSuccess;
 };
 
+exports.start = async (index) => {
+    let isSuccess = true;
+    try {
+        port = await new SerialPort(`COM${index}`, function (err) {
+            if (err) {
+                port = null;
+                isSuccess = false;
+                return console.log('Error: ', err.message);
+            }
+        }, false);
+    } catch (e) {
+        isSuccess = false;
+        console.log(`ERROR in start function: COM${index} error:${e}`);
+    }
+
+    portPath = `COM${index}`;
+    console.log(`Port opened: COM${index}`);
+    return true;
+};
 
 

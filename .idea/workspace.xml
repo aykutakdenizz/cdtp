@@ -6,6 +6,7 @@
       <change beforePath="$PROJECT_DIR$/Com.js" beforeDir="false" afterPath="$PROJECT_DIR$/Com.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Controller/seraController.js" beforeDir="false" afterPath="$PROJECT_DIR$/Controller/seraController.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/temperature.js" beforeDir="false" afterPath="$PROJECT_DIR$/temperature.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +55,7 @@
       <workItem from="1606821072625" duration="7876000" />
       <workItem from="1607009255434" duration="12211000" />
       <workItem from="1607074918915" duration="4327000" />
+      <workItem from="1607508835087" duration="5223000" />
     </task>
     <servers />
   </component>
@@ -61,6 +63,10 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="137" y="20" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1607511015218">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="137" y="20" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1366.728/-1920.0.1536.824@0.0.1366.728" timestamp="1607511015218" />
     <state width="1345" height="179" key="GridCell.Tab.0.bottom" timestamp="1606827757033">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
