@@ -39,3 +39,60 @@ exports.setTemperature = async (req, res, next) => {
         });
     }
 };
+
+exports.listen =  async (req, res, next) => {
+    let list = await Com.listenPorts();
+    if (list == null) {
+        res.status(500);
+        await res.json({
+            response: 'Ports can not open.'
+        })
+    } else {
+        res.status(200);
+        let str = [];
+        list.forEach(portData => {
+            str.push(portData.path);
+        });
+        await res.json({
+            response: str
+        })
+    }
+};
+
+exports.check = async (req, res, next) => {
+    let list = Com.checkPortList();
+    res.status(200);
+    let str = [];
+    list.forEach(portData => {
+        str.push(portData.path);
+    });
+    await res.json({
+        response: str
+    })
+};
+
+exports.close = async (req, res, next) => {
+    const seraId = req.query.seraId;
+    if (seraId == null) {
+        return res.status(400).json({message: 'seraId is missing!'});
+    }
+    try {
+        let isSuccess = await Com.close(seraId);
+        if (isSuccess) {
+            res.status(200);
+            await res.json({
+                response: `COM${seraId} is stopped`
+            })
+        } else {
+            res.status(500);
+            await res.json({
+                response: `COM${seraId}  can not stopped, port can be null or already close.`
+            })
+        }
+    } catch (e) {
+        res.status(500);
+        await res.json({
+            response: `COM${seraId} can not stopped. Error occurred.`
+        })
+    }
+};
