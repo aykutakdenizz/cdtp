@@ -36,8 +36,9 @@ exports.listenPorts = async () => {
 
         if (!isError) {
             openedPort.on('data', function (data) {
+                data = data.toString().replace('\r\n','');
                 console.log(`Data Arrived ${openedPort.path}=>`, data);
-                Temperature.setTemperature(openedPort.path.substring(3, 4), String.fromCharCode.apply(null, new Uint16Array(data)));
+                Temperature.setTemperature(openedPort.path.substring(3, openedPort.path.length), data);
             });
             comPorts.push(openedPort);
             console.log(`Port listening ${openedPort.path}`);
@@ -77,18 +78,18 @@ exports.close = async (portId) => {
     return isSuccess;
 };
 
-exports.sendValueToPort = async (portId, buffer) => {
+exports.sendValueToPort = async (portId, temperature) => {
     let isSuccess = true;
     let port = await this.getPort(portId);
     if (port != null) {
-        await port.write(buffer, function (err, result) {
+        await port.write(`${temperature}\n`, function (err, result) {
             if (err) {
                 console.log('Error while sending message : ' + err);
                 isSuccess = false;
             }
         });
         if (isSuccess) {
-            console.log(`Message send to ${port.path}`);
+            console.log(`Message send to ${port.path} \n\tMessage:${temperature}`);
         }
     } else {
         console.log(`COM${portId} is not open, can not send value. This port is not connected, check connection or request listen()`);

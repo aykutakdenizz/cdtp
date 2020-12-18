@@ -20,14 +20,12 @@ exports.setTemperature = async (req, res, next) => {
     }
     let isSuccess;
     //send temperature to serial port from http request value
-    const buf = Buffer.alloc(1);
     if(req.body.temperature<0 || req.body.temperature>255){
         return res.status(400).json({
             message: 'Temperature is not valid!'
         });
     }
-    buf.writeUInt8(req.body.temperature, 0);
-    isSuccess = await Com.sendValueToPort( req.body.seraId, buf);
+    isSuccess = await Com.sendValueToPort( req.body.seraId, req.body.temperature);
 
     if (isSuccess) {
         res.status(200).json({
