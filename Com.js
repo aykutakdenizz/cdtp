@@ -37,8 +37,12 @@ exports.listenPorts = async () => {
         if (!isError) {
             openedPort.on('data', function (data) {
                 data = data.toString().replace('\r\n','');
+                const regex = RegExp('^[0-9]+\.[0-9]+');
                 console.log(`Data Arrived ${openedPort.path}=>`, data);
-                Temperature.setTemperature(openedPort.path.substring(3, openedPort.path.length), data);
+                if (regex.test(data)){
+                    console.log(`Valid Data `);      
+                    Temperature.setTemperature(openedPort.path.substring(3, openedPort.path.length), data);
+                }
             });
             comPorts.push(openedPort);
             console.log(`Port listening ${openedPort.path}`);
